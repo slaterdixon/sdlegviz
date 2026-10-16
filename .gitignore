@@ -1,1 +1,6 @@
 .Rproj.user
+*.env
+*.csv
+*.parquet
+*.yml
+*.DS_Store
