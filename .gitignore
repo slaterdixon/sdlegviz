@@ -4,3 +4,4 @@
 *.parquet
 *.yml
 *.DS_Store
+*.qmd
