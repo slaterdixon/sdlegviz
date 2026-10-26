@@ -86,8 +86,7 @@ backbone_from_components <- function(vertices,
 
 }
 
-get_vote_backbone <- function(legislators, 
-                                vote_infos, 
+get_vote_backbone <- function(vote_infos, 
                                 vote_choices,
                                 session_year,
                               chamber_name){
@@ -118,7 +117,7 @@ get_vote_backbone <- function(legislators,
                 
 }
 
-get_sponsorship_backbone <- function(session_year, sponsorship_relations, legislators){
+get_sponsorship_backbone <- function(session_year, sponsorship_relations){
 
   sponsorship_edges <- build_sponsorship_edges(sponsorship_relations = sponsorship_relations)
   

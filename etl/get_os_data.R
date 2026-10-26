@@ -4,34 +4,73 @@ library(futile.logger)
 
 ### Nodes
 ## Legislators
-get_yaml_file_names <- function(yaml_dir) {
-  list.files(yaml_dir, pattern = "\\.yml$", full.names = TRUE)
+parse_role <- function(role, leg_id){
+  tibble(
+    id = leg_id,
+    start_date = role$start_date,
+    end_date = role$end_date,
+    type  = role$type,
+    jurisdiction = role$jurisdiction,
+    district = role$district,
+    party = role$party$name
+  )
 }
 
+read_legislator_yaml <- function(leg_yaml_p){
 
-read_legislator_yaml <- function(leg_yaml_p) {
   yaml_content <- yaml::read_yaml(leg_yaml_p)
 
-  district <- NULL
-  first_name <- yaml_content$given_name
-  last_name <- yaml_content$family_name
-  id <- yaml_content$id
-  district <- yaml_content$roles
-  party <- yaml_content$party[[1]]$name
+  base_leg_info <- tibble(
+        id = yaml_content$id,
+        part = yaml_content$party$name,
+        name = yaml_content$name,
+        party = if(length(yaml_content$party) > 0) {yaml_content$party[[1]]$name} else { NULL},
+        given_name = yaml_content$given_name,
+        family_name = yaml_content$family_name,
+        birth_date = yaml_content$birth_date,
+        gender = yaml_content$gender,
+        email = yaml_content$email,
+        image = yaml_content$image
+)
 
-  yaml_row <- tibble(id, last_name, first_name, party, district)
+  roles <- tibble()
+  if (length(yaml_content$roles) > 0){
+    roles <-  bind_rows(map(yaml_content$roles, ~parse_role(., leg_id = yaml_content$id)))
+
+     return(base_leg_info |>
+        inner_join(roles, by = "id")
+     )
+  }
+
+  else {
+    return(base_leg_info)
+  }
 }
 
 get_os_legislators <- function(raw_data_path) {
   yaml_dir <- fs::path(raw_data_path, "sd_legislators_all")
 
-  yaml_file_names <- get_yaml_file_names(yaml_dir)
+  yaml_file_names <- list.files(yaml_dir, pattern = "\\.yml$", full.names = TRUE)
 
   map(yaml_file_names, read_legislator_yaml) |>
-    dplyr::bind_rows() |>
-    tidyr::unnest_wider(district) |>
-    rename(person_id = id, chamber_type = type)
+    bind_rows()  |>
+    mutate(
+      across(ends_with("date"), ymd)
+    ) |>
+   mutate(
+      start_year = year(start_date),
+      end_year = year(end_date)
+   ) |>
+    filter(!(is.na(start_year) & is.na(end_year))) |>
+    mutate(
+      start_year =  if_else(is.na(start_year), end_year - 1, start_year),
+      end_year =  if_else(is.na(end_year), start_year + 1, end_year)
+    ) |>
+      mutate(session_year = map2(start_year, end_year, ~.x:.y)) |>
+  unnest(session_year) |>
+  select(-c(start_year, end_year))
 }
+
 
 ## Bills
 get_os_bills <- function(year, year_data_p) {

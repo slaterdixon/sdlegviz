@@ -71,7 +71,6 @@ process_session <- function(
   ################# Graphs #######################
   for (chamber in c("HOUSE", "SENATE")) {
     backbone <- get_vote_backbone(
-      all_legs,
       vote_descriptions,
       vote_choices,
       session_year,
@@ -87,15 +86,14 @@ process_session <- function(
 
     sponsorship_backbone <- get_sponsorship_backbone(
       session_year,
-      sponsorships,
-      all_legs
+      sponsorships
     )
 
     spon_backbone_export_p <- fs::path(
       session_processed_data_p,
       "sponsorship_backbone.parquet"
     )
-    spon_backbone_df <- backbone |> igraph::as_data_frame()
+    spon_backbone_df <- sponsorship_backbone |> igraph::as_data_frame()
     arrow::write_parquet(spon_backbone_df, spon_backbone_export_p)
     flog.info(paste0("Wrote ", spon_backbone_export_p))
     
