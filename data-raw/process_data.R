@@ -6,8 +6,9 @@ library(futile.logger)
 
 
 # Helper functions
-source("etl/get_os_data.R")
-source("etl/build_graph_components.R")
+source("data-raw/get_os_data.R")
+source("data-raw/build_graph_components.R")
+source("data-raw/publish_app_data.R")
 
 # Paths
 load_dot_env(file = ".env")
@@ -19,6 +20,7 @@ if (!(fs::dir_exists(OPENSTATES_RAW_DATA_PATH))) {
 }
 
 DEST_DATA_PATH <- fs::path(DATA_PATH, "processed")
+APP_DATA_PATH <- fs::path(BASE_PATH, "inst", "extdata")
 
 
 # Constants
@@ -127,4 +129,9 @@ process_all_sessions <- function(raw_data_base_path, dest_data_base_path) {
 process_all_sessions(
   raw_data_base_path = OPENSTATES_RAW_DATA_PATH,
   dest_data_base_path = DEST_DATA_PATH
+)
+
+publish_app_data(
+  processed_base_path = DEST_DATA_PATH,
+  app_data_base_path = APP_DATA_PATH
 )

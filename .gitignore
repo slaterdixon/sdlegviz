@@ -6,3 +6,11 @@
 *.DS_Store
 .DS_Store
 *.qmd
+.DS_Store
+.Rhistory
+.RData
+.httr-oauth
+.quarto
+!inst/extdata/
+!inst/extdata/**/*.parquet
+*.Rhistory

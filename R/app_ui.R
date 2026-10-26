@@ -5,12 +5,43 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
+  years <- get_session_years()
+
   tagList(
-    # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic
-    fluidPage(
-      golem::golem_welcome_page() # Remove this line to start building your UI
+    navbarPage(
+      title = "SD Legviz",
+      network_tab("House", "house", years),
+      network_tab("Senate", "senate", years),
+      network_tab("Sponsorships", "sponsor", years)
+    )
+  )
+}
+
+#' One tab with a session year picker beside a network plot
+#'
+#' @param title Tab title.
+#' @param prefix Prefix for the input/output ids, e.g. "house" gives
+#'     `house_select_year` and `house_network_viz`.
+#' @param years Session years to offer in the picker.
+#' @noRd
+network_tab <- function(title, prefix, years) {
+  tabPanel(
+    title = title,
+    value = prefix,
+    fluidRow(
+      column(
+        width = 3,
+        selectInput(
+          inputId = paste0(prefix, "_select_year"),
+          label = "Select a session year",
+          choices = years
+        )
+      ),
+      column(
+        width = 9,
+        plotOutput(outputId = paste0(prefix, "_network_viz"))
+      )
     )
   )
 }
