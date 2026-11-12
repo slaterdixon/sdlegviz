@@ -6,7 +6,6 @@ importFrom(golem,
   activate_js,
   add_resource_path,
   bundle_resources,
-  favicon,
   with_golem_options
 )
 importFrom(shiny,

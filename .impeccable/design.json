@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-12T01:14:05.961068+00:00",
+  "title": "Design System: SD Legviz",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ledger Ink",
+        "canonical": "#1c1917",
+        "tonalRamp": [
+          "#292624",
+          "#4a443f",
+          "#6c625b",
+          "#8e8076",
+          "#a99f98",
+          "#c4beba",
+          "#dedbd9",
+          "#f3f2f2"
+        ]
+      },
+      "muted-stone": {
+        "role": "neutral",
+        "displayName": "Muted Stone",
+        "canonical": "#78716c",
+        "tonalRamp": [
+          "#282625",
+          "#484442",
+          "#68635f",
+          "#89817c",
+          "#a5a09c",
+          "#c2bfbd",
+          "#dddbda",
+          "#f3f2f2"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline Stone",
+        "canonical": "#e7e5e4",
+        "tonalRamp": [
+          "#282625",
+          "#484442",
+          "#69625e",
+          "#89807b",
+          "#a69f9c",
+          "#c2bebc",
+          "#dddbda",
+          "#f3f2f2"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#454545",
+          "#636363",
+          "#828282",
+          "#a1a1a1",
+          "#bfbfbf",
+          "#dbdbdb",
+          "#f2f2f2"
+        ]
+      },
+      "warm-page": {
+        "role": "neutral",
+        "displayName": "Warm Page",
+        "canonical": "#fafaf9",
+        "tonalRamp": [
+          "#292924",
+          "#4a4a40",
+          "#6c6c5b",
+          "#8d8d77",
+          "#a8a899",
+          "#c4c4bb",
+          "#ddddd9",
+          "#f3f3f2"
+        ]
+      },
+      "republican-red": {
+        "role": "data",
+        "displayName": "Republican Red",
+        "canonical": "#cd2626",
+        "tonalRamp": [
+          "#381414",
+          "#6a1f1f",
+          "#a12626",
+          "#d72d2d",
+          "#da6767",
+          "#e19d9d",
+          "#eccbcb",
+          "#f7eded"
+        ]
+      },
+      "democratic-blue": {
+        "role": "data",
+        "displayName": "Democratic Blue",
+        "canonical": "#00aef3",
+        "tonalRamp": [
+          "#0c3240",
+          "#0e5c7b",
+          "#0a8abd",
+          "#06b8fe",
+          "#4dc5f4",
+          "#8ed5f1",
+          "#c3e6f3",
+          "#ebf6fa"
+        ]
+      },
+      "other-gray": {
+        "role": "data",
+        "displayName": "Other Gray",
+        "canonical": "#808080",
+        "tonalRamp": [
+          "#262626",
+          "#454545",
+          "#636363",
+          "#828282",
+          "#a1a1a1",
+          "#bfbfbf",
+          "#dbdbdb",
+          "#f2f2f2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Title",
+        "purpose": "Legislator name."
+      },
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "Navbar title."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Card facts, nav."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "About text, vote lists."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Control labels, uppercase."
+      },
+      "section-label": {
+        "displayName": "Section label",
+        "purpose": "Card and About headings, uppercase."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "992px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Navigation tabs",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Quiet text tabs; the active one gets an ink underline.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-tab ds-tab-active\">House</a><a class=\"ds-tab\">Senate</a><a class=\"ds-tab\">Sponsorships</a></nav>",
+      "css": ".ds-nav{display:flex;gap:1.25rem;background:#fff;border-bottom:1px solid #e7e5e4;padding:0 1rem;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif}.ds-tab{padding:.9rem .25rem;color:#78716c;font-size:.875rem;border-bottom:2px solid transparent;cursor:pointer;text-decoration:none}.ds-tab:hover{color:#1c1917}.ds-tab:focus-visible{outline:2px solid #1c1917;outline-offset:2px}.ds-tab-active{color:#1c1917;border-bottom-color:#1c1917}"
+    },
+    {
+      "name": "Search field",
+      "kind": "input",
+      "refersTo": "graph-panel",
+      "description": "Labeled select with an uppercase caption.",
+      "html": "<label class=\"ds-label\">Find a legislator</label><div class=\"ds-field\">Search by name</div>",
+      "css": ".ds-label{display:block;margin-bottom:.25rem;font:400 .75rem system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#78716c}.ds-field{padding:.5rem .75rem;border:1px solid #d6d3d1;border-radius:6px;background:#fff;color:#78716c;font:400 .875rem system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif}.ds-field:hover{border-color:#78716c}.ds-field:focus-visible{outline:2px solid #1c1917;outline-offset:2px}"
+    },
+    {
+      "name": "Graph panel",
+      "kind": "card",
+      "refersTo": "graph-panel",
+      "description": "Page-colored panel with a hairline border holding the network.",
+      "html": "<div class=\"ds-graph\"></div>",
+      "css": ".ds-graph{height:140px;border:1px solid #e7e5e4;border-radius:8px;background:#fafaf9}"
+    },
+    {
+      "name": "Legislator header",
+      "kind": "custom",
+      "refersTo": "graph-panel",
+      "description": "Round photo, name, and a party dot.",
+      "html": "<header class=\"ds-who\"><span class=\"ds-photo\"></span><div><h2 class=\"ds-name\">Legislator Name</h2><p class=\"ds-party\">Republican</p></div></header>",
+      "css": ".ds-who{display:flex;gap:.9rem;align-items:center;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif}.ds-photo{width:4.5rem;height:4.5rem;border-radius:50%;background:#e7e5e4}.ds-name{margin:0;font-size:1.15rem;font-weight:600;line-height:1.25;color:#1c1917}.ds-party{margin:.15rem 0 0;font-size:.85rem;color:#78716c}.ds-party::before{content:'';display:inline-block;width:.55rem;height:.55rem;margin-right:.4rem;border-radius:50%;background:#cd2626}"
+    },
+    {
+      "name": "Share bar",
+      "kind": "custom",
+      "refersTo": "share-track",
+      "description": "A share of votes as a pill bar with a tick at the party average.",
+      "html": "<div class=\"ds-share\"><div class=\"ds-share-label\"><strong>Votes with party</strong><span>80% of 170 votes</span></div><div class=\"ds-track\"><div class=\"ds-fill\" style=\"width:80%\"></div><div class=\"ds-tick\" style=\"left:67%\"></div></div></div>",
+      "css": ".ds-share{font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;max-width:20rem}.ds-share-label{display:flex;justify-content:space-between;gap:.75rem;font-size:.85rem}.ds-share-label strong{font-weight:600;color:#1c1917}.ds-share-label span{color:#78716c}.ds-track{position:relative;height:.5rem;margin:.5rem 0;border-radius:99px;background:#e7e5e4}.ds-fill{height:100%;border-radius:99px;background:#cd2626}.ds-tick{position:absolute;top:-.25rem;bottom:-.25rem;width:2px;margin-left:-1px;background:#1c1917}"
+    },
+    {
+      "name": "Section label",
+      "kind": "custom",
+      "refersTo": "typography.section-label",
+      "description": "Uppercase label over a hairline, introduces each card or About block.",
+      "html": "<h3 class=\"ds-section\">Compared with their party</h3>",
+      "css": ".ds-section{margin:0;padding-top:1rem;border-top:1px solid #e7e5e4;font:600 .7rem system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#78716c}"
+    },
+    {
+      "name": "About row",
+      "kind": "custom",
+      "refersTo": "typography.small",
+      "description": "Native expandable question with a hairline between rows.",
+      "html": "<details class=\"ds-about\"><summary>What does a line mean?</summary><p>Answer text.</p></details>",
+      "css": ".ds-about{padding:.4rem 0;border-bottom:1px solid #e7e5e4;font:400 .8rem system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',sans-serif}.ds-about summary{font-weight:600;cursor:pointer;color:#1c1917}.ds-about summary:focus-visible{outline:2px solid #1c1917;outline-offset:2px}.ds-about p{margin:.4rem 0 .5rem;color:#78716c;line-height:1.45}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Public Ledger",
+    "overview": "A record to check, not a show to watch. Every mark traces to a definition. Neutral warm-gray chrome; photos and party colors are the only strong color. Flat, with hairlines separating. No site voice or generated copy.",
+    "keyCharacteristics": [
+      "Scanability and consistency over expression.",
+      "Three columns on desktop: controls, graph, detail.",
+      "Dense data stays readable by being quiet."
+    ],
+    "rules": [
+      {
+        "name": "The Data-Only Color Rule",
+        "body": "Red and blue appear only where they encode party: nodes, edges, bars, the party dot. Never in buttons, banners, headings, or backgrounds.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Chrome Rule",
+        "body": "The interface around the graph stays neutral so the graph is the loudest thing on screen.",
+        "section": "colors"
+      },
+      {
+        "name": "The Label-Only Caps Rule",
+        "body": "Uppercase only for labels and section headings, never for sentences.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Separate with a 1px Hairline Stone border. No drop shadows, no glows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep chrome neutral and let the graph carry the color.",
+      "**Do** keep definitions one click away from every number.",
+      "**Do** show members with no links as unlinked nodes."
+    ],
+    "donts": [
+      "**Don't** give it \"shiny dash\" vibes: no gradient cards, big KPI tiles, glossy panels, or default Shiny/dashboard styling.",
+      "**Don't** use anything polarizing: no loud partisan red/blue in the interface, no campaign or attack-ad styling, no rankings or labels that read as accusation.",
+      "**Don't** add shadows, glows, or decorative motion.",
+      "**Don't** write or generate site copy or a \"voice\"; copy is the author's."
+    ]
+  }
+}

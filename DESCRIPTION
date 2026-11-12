@@ -7,11 +7,15 @@ Description: Load and visualize roll call votes in the South Dakota
     legislature.
 License: MIT + file LICENSE
 Imports: 
+    arrow,
+    bslib,
     config,
     golem,
-    shiny
-Suggests: 
     htmltools,
+    igraph,
+    shiny,
+    visNetwork
+Suggests: 
     spelling,
     testthat (>= 3.0.0)
 Config/roxygen2/version: 8.1.1
