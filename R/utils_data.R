@@ -11,12 +11,12 @@ app_data_path <- function() {
   path
 }
 
-#' Session years that have a full set of backbones
+#' Session years that have a full set of app data
 #'
 #' @return Integer vector of years, sorted descending.
 #' @noRd
 get_session_years <- function(data_path = app_data_path()) {
-  backbones <- c(
+  session_files <- c(
     "house_backbone.parquet",
     "senate_backbone.parquet",
     "sponsorship_backbone.parquet"
@@ -24,7 +24,7 @@ get_session_years <- function(data_path = app_data_path()) {
   year_dirs <- list.files(data_path, pattern = "^20[0-9]{2}$", full.names = TRUE)
   complete <- vapply(
     year_dirs,
-    function(d) all(file.exists(file.path(d, backbones))),
+    function(d) all(file.exists(file.path(d, session_files))),
     logical(1)
   )
   sort(as.integer(basename(year_dirs[complete])), decreasing = TRUE)

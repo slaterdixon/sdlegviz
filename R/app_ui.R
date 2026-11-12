@@ -7,28 +7,32 @@
 app_ui <- function(request) {
   years <- get_session_years()
 
-  tagList(
-    golem_add_external_resources(),
-    navbarPage(
-      title = "SD Legviz",
-      network_tab("House", "house", years),
-      network_tab("Senate", "senate", years),
-      network_tab("Sponsorships", "sponsorship", years)
-    )
+  bslib::page_navbar(
+    title = tags$span(
+      tags$img(src = "www/logo.svg", alt = "", class = "navbar-logo"),
+      "SD Legviz"
+    ),
+    window_title = "SD Legviz",
+    theme = app_theme(),
+    header = golem_add_external_resources(),
+    bslib::nav_panel("House", value = "house", mod_network_ui("house", years)),
+    bslib::nav_panel("Senate", value = "senate", mod_network_ui("senate", years)),
+    bslib::nav_panel("Sponsorships", value = "sponsorship", mod_network_ui("sponsorship", years))
   )
 }
 
-#' One navbar tab wrapping a network module
-#'
-#' @param title Tab title.
-#' @param backbone Backbone shown by the tab, also the module id.
-#' @param years Session years to offer in the picker.
+#' The Bootstrap theme: plain, with the party colors as the only color
 #' @noRd
-network_tab <- function(title, backbone, years) {
-  tabPanel(
-    title = title,
-    value = backbone,
-    mod_network_ui(backbone, years)
+app_theme <- function() {
+  bslib::bs_theme(
+    version = 5,
+    bg = "#fafaf9",
+    fg = "#1c1917",
+    primary = "#1c1917",
+    "border-radius" = "6px",
+    base_font = bslib::font_collection(
+      "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "sans-serif"
+    )
   )
 }
 
@@ -38,7 +42,7 @@ network_tab <- function(title, backbone, years) {
 #' resources inside the Shiny application.
 #'
 #' @import shiny
-#' @importFrom golem add_resource_path activate_js favicon bundle_resources
+#' @importFrom golem add_resource_path activate_js bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {
   add_resource_path(
@@ -47,7 +51,7 @@ golem_add_external_resources <- function() {
   )
 
   tags$head(
-    favicon(),
+    tags$link(rel = "icon", type = "image/x-icon", href = "www/favicon.ico"),
     bundle_resources(
       path = app_sys("app/www"),
       app_title = "sdlegviz"
