@@ -1,76 +1,5 @@
-library(yaml)
 library(futile.logger)
-
-
-### Nodes
-## Legislators
-parse_role <- function(role, leg_id){
-  tibble(
-    id = leg_id,
-    start_date = role$start_date,
-    end_date = role$end_date,
-    type  = role$type,
-    jurisdiction = role$jurisdiction,
-    district = role$district,
-    party = role$party$name
-  )
-}
-
-read_legislator_yaml <- function(leg_yaml_p){
-
-  yaml_content <- yaml::read_yaml(leg_yaml_p)
-
-  base_leg_info <- tibble(
-        id = yaml_content$id,
-        part = yaml_content$party$name,
-        name = yaml_content$name,
-        party = if(length(yaml_content$party) > 0) {yaml_content$party[[1]]$name} else { NULL},
-        given_name = yaml_content$given_name,
-        family_name = yaml_content$family_name,
-        birth_date = yaml_content$birth_date,
-        gender = yaml_content$gender,
-        email = yaml_content$email,
-        image = yaml_content$image
-)
-
-  roles <- tibble()
-  if (length(yaml_content$roles) > 0){
-    roles <-  bind_rows(map(yaml_content$roles, ~parse_role(., leg_id = yaml_content$id)))
-
-     return(base_leg_info |>
-        inner_join(roles, by = "id")
-     )
-  }
-
-  else {
-    return(base_leg_info)
-  }
-}
-
-get_os_legislators <- function(raw_data_path) {
-  yaml_dir <- fs::path(raw_data_path, "sd_legislators_all")
-
-  yaml_file_names <- list.files(yaml_dir, pattern = "\\.yml$", full.names = TRUE)
-
-  map(yaml_file_names, read_legislator_yaml) |>
-    bind_rows()  |>
-    mutate(
-      across(ends_with("date"), ymd)
-    ) |>
-   mutate(
-      start_year = year(start_date),
-      end_year = year(end_date)
-   ) |>
-    filter(!(is.na(start_year) & is.na(end_year))) |>
-    mutate(
-      start_year =  if_else(is.na(start_year), end_year - 1, start_year),
-      end_year =  if_else(is.na(end_year), start_year + 1, end_year)
-    ) |>
-      mutate(session_year = map2(start_year, end_year, ~.x:.y)) |>
-  unnest(session_year) |>
-  select(-c(start_year, end_year))
-}
-
+library(tidyverse)
 
 ## Bills
 get_os_bills <- function(year, year_data_p) {
@@ -102,6 +31,17 @@ get_os_votes <- function(year, year_data_p) {
     year_data_p,
     paste0("/SD_", year, "_organizations.csv")
   )
+  # OpenStates organization ids are the same in every session, so a session
+  # exported without its organizations can use another one's
+  if (!fs::file_exists(org_type_p)) {
+    org_type_p <- sort(fs::dir_ls(
+      fs::path_dir(year_data_p),
+      recurse = TRUE,
+      regexp = "_organizations\\.csv$"
+    ))[1]
+    if (is.na(org_type_p)) stop("No organizations.csv found next to ", year_data_p)
+    flog.info(paste0("Using the organizations in ", org_type_p, " for ", year))
+  }
   orgs <- read_csv(org_type_p, show_col_types = FALSE) |>
     select(id, name) |>
     mutate(name = str_to_upper(name)) |>
@@ -150,12 +90,13 @@ get_os_votechoices <- function(
   )
 
   vote_selections <- read_csv(vote_selections_p, show_col_types = FALSE) |>
-                        left_join(fixed_fltr, by = "voter_name") |>
+                        left_join(fixed_fltr, by = "voter_name", relationship = "many-to-one") |>
                         mutate(voter_id = coalesce(voter_id, person_id)) |>
                         select(-c("person_id"))
 
+  # The presiding officer's tie-breaking vote isn't a member's, so has no person
   selections <- vote_selections |>
-    filter(option %in% c("yes", "no")) |>
+    filter(option %in% c("yes", "no"), voter_name != "President Votes") |>
     mutate(year = year) |>
     rename(person_id = voter_id, vote_id = vote_event_id) |>
     left_join(chamber_lookup, by = "vote_id")
@@ -178,20 +119,30 @@ get_os_votechoices <- function(
 
 selections
 
-
 }
 
 
-get_os_sponsorships <- function(year, year_data_p, bills) {
+# vote_choices: the votechoices of the session. Some sponsorships have a name
+#   but no person id, and take the id of the voter with that name.
+get_os_sponsorships <- function(year, year_data_p, bills, vote_choices) {
+  voter_ids <- vote_choices |>
+    filter(!is.na(person_id)) |>
+    distinct(name = voter_name, voter_person_id = person_id)
+  ambiguous <- voter_ids |> count(name) |> filter(n > 1)
+  if (nrow(ambiguous) > 0) {
+    stop("Voter names with more than one person id in ", year, ": ", paste(ambiguous$name, collapse = ", "))
+  }
+
   sponsorships_p <- fs::path(
     year_data_p,
     paste0("/SD_", year, "_bill_sponsorships.csv")
   )
 
   read_csv(sponsorships_p, show_col_types = FALSE) |>
-    inner_join(bills, by = "bill_id") |>
     filter(entity_type == "person") |>
-    select(-c(entity_type, organization_id)) |>
+    left_join(voter_ids, by = "name") |>
+    mutate(person_id = coalesce(person_id, voter_person_id)) |>
+    inner_join(bills, by = "bill_id") |>
     select(person_id, bill_id) |>
     mutate(year = year) |>
     drop_na()

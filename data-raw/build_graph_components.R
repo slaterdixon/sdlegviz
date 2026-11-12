@@ -1,10 +1,14 @@
 library(tidyverse)
 library(futile.logger)
 
+# A pair of legislators is linked in the vote backbone if they voted together
+# more than chance would, with at most this probability
+VOTE_BACKBONE_ALPHA <- .01
+
 
 fltr_noncontentious_bills <- function(vote_choices, 
                                         vote_infos, 
-                                        thresh = 0){
+                                        thresh = 6){
   
   competitive.votes <- vote_infos |>
     mutate(dissent_percent = (no / (yes + no + excused + absent) * 100)) |>
@@ -81,7 +85,7 @@ backbone_from_components <- function(vertices,
   
   graph <- igraph::graph_from_data_frame(edges, vertices = vertices) 
   
-  backbone::backbone_from_projection(graph, alpha = .01, model = "sdsm")
+  backbone::backbone_from_projection(graph, alpha = VOTE_BACKBONE_ALPHA, model = "sdsm")
 
 
 }
@@ -129,4 +133,3 @@ igraph::graph_from_data_frame(sponsorship_edges,
     backbone::backbone_from_projection(model = "sdsm", alpha = .01)
 
 }
-

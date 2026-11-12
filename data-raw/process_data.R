@@ -1,3 +1,12 @@
+# The whole pipeline, from the raw data to what the app ships with:
+#   1. process_all_sessions: the OpenStates votes, bills and graphs of each
+#      session
+#   2. process_sd_legislators: the legislators of each session from the SD
+#      legislature site, linked to the OpenStates person ids in the votes. Stops
+#      for manual review if a member can't be linked.
+#   3. publish_app_data: stage the app's files in inst/extdata. Runs last, so a
+#      stop in an earlier step leaves what the app ships with untouched.
+
 library(dotenv)
 library(fs)
 library(tidyverse)
@@ -8,6 +17,7 @@ library(futile.logger)
 # Helper functions
 source("data-raw/get_os_data.R")
 source("data-raw/build_graph_components.R")
+source("data-raw/process_sd_legislators.R")
 source("data-raw/publish_app_data.R")
 
 # Paths
@@ -19,18 +29,23 @@ if (!(fs::dir_exists(OPENSTATES_RAW_DATA_PATH))) {
   stop("Could not find raw data at '", OPENSTATES_RAW_DATA_PATH, "'")
 }
 
+SD_RAW_DATA_PATH <- fs::path(DATA_PATH, "raw", "sdlegislature")
+# Hand-keyed OpenStates ids for the SD members the votes can't link
+MANUAL_SD_IDS_PATH <- fs::path(DATA_PATH, "handkeyed", "sd_personid_fixed.csv")
+SD_REVIEW_PATH <- fs::path(DATA_PATH, "handkeyed", "to_review", "sd_members_unmatched.csv")
+
 DEST_DATA_PATH <- fs::path(DATA_PATH, "processed")
 APP_DATA_PATH <- fs::path(BASE_PATH, "inst", "extdata")
 
 
 # Constants
 YEARS <- c(2018, 2026)
+REFRESH_SD_DATA <- TRUE # TRUE = download the SD legislature members again
 
 process_session <- function(
   raw_data_base_path,
   dest_data_base_path,
-  session_year,
-  all_legs
+  session_year
 ) {
   session_raw_data_p <- fs::path(raw_data_base_path, session_year)
   session_processed_data_p <- fs::path(dest_data_base_path, session_year)
@@ -62,7 +77,7 @@ process_session <- function(
   arrow::write_parquet(vote_choices, vote_choices_dest_p)
   flog.info(paste0("Wrote ", vote_choices_dest_p))
 
-  sponsorships <- get_os_sponsorships(session_year, session_raw_data_p, bills)
+  sponsorships <- get_os_sponsorships(session_year, session_raw_data_p, bills, vote_choices)
   sponsorships_dest_p <- fs::path(
     session_processed_data_p,
     "sponsorships.parquet"
@@ -71,34 +86,21 @@ process_session <- function(
   flog.info(paste0("Wrote ", sponsorships_dest_p))
 
   ################# Graphs #######################
-  for (chamber in c("HOUSE", "SENATE")) {
-    backbone <- get_vote_backbone(
-      vote_descriptions,
-      vote_choices,
-      session_year,
-      chamber
-    )
+  backbones <- list(
+    house = get_vote_backbone(vote_descriptions, vote_choices, session_year, "HOUSE"),
+    senate = get_vote_backbone(vote_descriptions, vote_choices, session_year, "SENATE"),
+    sponsorship = get_sponsorship_backbone(session_year, sponsorships)
+  )
 
+  for (backbone_name in names(backbones)) {
     backbone_export_p <- fs::path(
       session_processed_data_p,
-      paste0(str_to_lower(chamber), "_backbone.parquet")
+      paste0(backbone_name, "_backbone.parquet")
     )
-    backbone_df <- backbone |> igraph::as_data_frame()
-    arrow::write_parquet(backbone_df, backbone_export_p)
-
-    sponsorship_backbone <- get_sponsorship_backbone(
-      session_year,
-      sponsorships
-    )
-
-    spon_backbone_export_p <- fs::path(
-      session_processed_data_p,
-      "sponsorship_backbone.parquet"
-    )
-    spon_backbone_df <- sponsorship_backbone |> igraph::as_data_frame()
-    arrow::write_parquet(spon_backbone_df, spon_backbone_export_p)
-    flog.info(paste0("Wrote ", spon_backbone_export_p))
-    
+    backbones[[backbone_name]] |>
+      igraph::as_data_frame() |>
+      arrow::write_parquet(backbone_export_p)
+    flog.info(paste0("Wrote ", backbone_export_p))
   }
 }
 
@@ -109,18 +111,12 @@ process_all_sessions <- function(raw_data_base_path, dest_data_base_path) {
     as.numeric
   )
 
-  legislators <- get_os_legislators(raw_data_base_path)
-  legislators_proc_p <- fs::path(dest_data_base_path, "legislators.parquet")
-  arrow::write_parquet(legislators, legislators_proc_p)
-  flog.info(paste0("Wrote", legislators_proc_p))
-
   for (yr in years) {
     flog.info(paste0("Doing ", yr))
     process_session(
       raw_data_base_path = raw_data_base_path,
       dest_data_base_path = dest_data_base_path,
-      session_year = yr,
-      all_legs = legislators
+      session_year = yr
     )
   }
 }
@@ -129,6 +125,14 @@ process_all_sessions <- function(raw_data_base_path, dest_data_base_path) {
 process_all_sessions(
   raw_data_base_path = OPENSTATES_RAW_DATA_PATH,
   dest_data_base_path = DEST_DATA_PATH
+)
+
+process_sd_legislators(
+  sd_raw_data_path = SD_RAW_DATA_PATH,
+  processed_data_path = DEST_DATA_PATH,
+  manual_p = MANUAL_SD_IDS_PATH,
+  review_p = SD_REVIEW_PATH,
+  refresh = REFRESH_SD_DATA
 )
 
 publish_app_data(
