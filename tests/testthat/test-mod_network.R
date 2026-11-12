@@ -246,8 +246,15 @@ test_that("the card shows how often a legislator votes with their party and lead
   )
   card <- as.character(legislator_card(legislator))
 
-  expect_match(card, "<dd>90% of 126 votes</dd>", fixed = TRUE)
-  expect_match(card, "<dd>94% of 120 votes</dd>", fixed = TRUE)
+  expect_match(card, "Votes with party</strong>\\s*<span>90% of 126 votes</span>")
+  expect_match(card, "Votes with leadership</strong>\\s*<span>94% of 120 votes</span>")
+  # With no one else in the party, the bar has no average to mark
+  expect_no_match(card, "Party average", fixed = TRUE)
+
+  peers <- rbind(legislator, transform(legislator, id = "b", pct_party = 0.5, pct_leadership = 0.5))
+  card <- as.character(legislator_card(legislator, peers = peers))
+  expect_match(card, "Party average 70%", fixed = TRUE)
+  expect_match(card, "Party average 72%", fixed = TRUE)
   expect_match(card, "at least 10% of the chamber voted the other way", fixed = TRUE)
 
   # With no leadership to compare to, only the party share is shown
@@ -313,4 +320,87 @@ test_that("the card loads the picked legislator's votes", {
 test_that("there is no table of contentious votes any more", {
   expect_no_match(as.character(app_ui(NULL)), "contentious_votes", fixed = TRUE)
   expect_false(exists("read_contentious_votes"))
+})
+
+test_that("legislators in leadership are drawn larger", {
+  g <- read_backbone("house", 2024)
+  leader <- !is.na(g$legislators$position[match(g$nodes$id, g$legislators$id)])
+
+  expect_true(any(leader))
+  expect_true(all(g$nodes$size[leader] == LEADER_NODE_SIZE))
+  expect_true(all(g$nodes$size[!leader] == NODE_SIZE))
+})
+
+test_that("a legislator linked to no one is still a node of their chamber", {
+  g <- read_backbone("senate", 2024)
+  linked <- unique(c(g$edges$from, g$edges$to))
+  alone <- g$legislators[!g$legislators$id %in% linked, ]
+
+  # The four Democrats of the 2024 Senate agree with no one beyond chance
+  expect_true(all(c("Liz Larson", "Reynold Nesiba") %in% alone$name))
+  expect_true(all(alone$office == "Senate"))
+  expect_equal(nrow(g$nodes), nrow(g$legislators))
+  expect_false(anyDuplicated(g$nodes$id) > 0)
+})
+
+test_that("the about file gives each tab its intro and answered questions", {
+  path <- tempfile(fileext = ".md")
+  writeLines(c(
+    "<!-- A note to the author,",
+    "## not a question, and never shown -->",
+    "",
+    "The **intro**, with a [link](https://example.org).",
+    "",
+    "## Every tab",
+    "An answer.",
+    "",
+    "## Votes only {tabs: house, senate}",
+    "Only for votes.",
+    "",
+    "## Not written yet",
+    "<!-- another note -->",
+    "",
+    "## Sponsorships only  {tabs:  sponsorship }",
+    "Only for bills."
+  ), path)
+
+  questions <- function(backbone) vapply(read_about(backbone, path)$questions, \(x) x$question, "")
+  expect_equal(questions("house"), c("Every tab", "Votes only"))
+  expect_equal(questions("senate"), c("Every tab", "Votes only"))
+  expect_equal(questions("sponsorship"), c("Every tab", "Sponsorships only"))
+  expect_match(read_about("house", path)$intro, "The **intro**", fixed = TRUE)
+
+  panel <- as.character(about_panel("house", path))
+  expect_match(panel, "<summary>Every tab</summary>", fixed = TRUE)
+  expect_match(panel, '<div class="about-intro">', fixed = TRUE)
+  expect_match(panel, "<strong>intro</strong>", fixed = TRUE)
+  # The intro is above the questions, and is not inside one
+  expect_lt(regexpr("about-intro", panel), regexpr("<details>", panel))
+  expect_no_match(panel, "Not written yet", fixed = TRUE)
+  expect_no_match(panel, "Only for bills", fixed = TRUE)
+  expect_no_match(panel, "tabs:", fixed = TRUE)
+  expect_no_match(panel, "note to the author", fixed = TRUE)
+  expect_no_match(panel, "never shown", fixed = TRUE)
+  # Links leave the app in a new tab
+  expect_match(panel, 'target="_blank"', fixed = TRUE)
+  expect_match(panel, 'rel="noopener"', fixed = TRUE)
+})
+
+test_that("the about section can be only an intro, or nothing", {
+  path <- tempfile(fileext = ".md")
+  writeLines("Just an intro.", path)
+  panel <- as.character(about_panel("house", path))
+  expect_match(panel, "Just an intro.", fixed = TRUE)
+  expect_no_match(panel, "<details>", fixed = TRUE)
+
+  writeLines(c("## A question", "", "## Another"), path)
+  expect_null(about_panel("house", path))
+  expect_equal(read_about("house", path), list(intro = NULL, questions = list()))
+  expect_null(about_panel("house", tempfile()))
+
+  # The file shipped with the app has the questions to be answered, and shows
+  # nothing until they are
+  shipped <- readLines(app_sys("app/about.md"))
+  expect_true(any(grepl("^## ", shipped)))
+  expect_null(read_about("house", app_sys("app/about.md"))$intro)
 })

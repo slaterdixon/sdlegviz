@@ -1,5 +1,5 @@
 # The data-raw scripts aren't part of the installed package
-sd_data_p <- test_path("../../data-raw/get_sd_data.R")
+sd_data_p <- test_path("../../data-raw/get_sdlrc_data.R")
 skip_if_not(file.exists(sd_data_p), "data-raw is not available")
 for (pkg in c("dplyr", "jsonlite", "futile.logger", "fs", "purrr", "rlang", "tibble")) {
   skip_if_not_installed(pkg)
