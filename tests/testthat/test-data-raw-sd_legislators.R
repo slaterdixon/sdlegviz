@@ -201,7 +201,7 @@ test_that("process_sd_legislators writes the legislators of every processed sess
   withr::local_dir(test_path("../.."))
   source(process_p, local = TRUE)
   # Offline: the one session whose members are cached below
-  get_sd_sessions <- function(years) tibble::tibble(session_id = 1L, session_year = 2024L)
+  get_session_id_lookup <- function(years) tibble::tibble(session_id = 1L, session_year = 2024L)
 
   processed <- withr::local_tempdir()
   raw_sd <- withr::local_tempdir()
@@ -210,14 +210,25 @@ test_that("process_sd_legislators writes the legislators of every processed sess
   arrow::write_parquet(fake_votes(members), fs::path(processed, 2024, "votechoices.parquet"))
   arrow::write_parquet(fake_vote_infos(), fs::path(processed, 2024, "votes.parquet"))
   arrow::write_parquet(
-    tibble::tibble(bill_id = "b1", identifier = "HB 1", name = "a bill"),
+    tibble::tibble(
+      bill_id = "b1", identifier = "HB 1", name = "a bill", earliest_action = as.Date("2024-01-10")
+    ),
     fs::path(processed, 2024, "bills.parquet")
+  )
+  # The first two members sponsor the one bill together
+  arrow::write_parquet(
+    tibble::tibble(person_id = fake_person_id(members$PersonId[1:2]), bill_id = "b1", year = 2024L),
+    fs::path(processed, 2024, "sponsorships.parquet")
   )
   # Cached as the site returns it, so nothing is downloaded
   jsonlite::write_json(
     members[setdiff(names(members), "session_year")],
     fs::path(raw_sd, "SD_2024_members.json"),
     na = "null"
+  )
+  jsonlite::write_json(
+    data.frame(BillId = 25083, BillType = "HB", BillNumberOnly = 1),
+    fs::path(raw_sd, "SD_2024_bills.json")
   )
 
   suppressMessages(process_sd_legislators(
@@ -233,4 +244,10 @@ test_that("process_sd_legislators writes the legislators of every processed sess
   legislator_votes <- arrow::read_parquet(fs::path(processed, "legislator_votes.parquet"))
   expect_equal(nrow(legislator_votes), 105)
   expect_equal(unique(legislator_votes$side), "majority")
+  sponsored <- arrow::read_parquet(fs::path(processed, "legislator_sponsorships.parquet"))
+  expect_equal(nrow(sponsored), 2)
+  expect_equal(unique(sponsored$n_cosponsors), 1)
+  # Both link to the bill's page on the site, found from its name
+  expect_equal(unique(legislator_votes$bill_url), "https://sdlegislature.gov/Session/Bill/25083")
+  expect_equal(unique(sponsored$bill_url), "https://sdlegislature.gov/Session/Bill/25083")
 })
