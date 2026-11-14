@@ -1,6 +1,6 @@
 
 <figure>
-<img src="./docs/README_SS.png" alt="SDLegVizScreenshot" />
+<img src="man/figures/README_SS.png" alt="SDLegVizScreenshot" />
 <figcaption aria-hidden="true">SDLegVizScreenshot</figcaption>
 </figure>
 
