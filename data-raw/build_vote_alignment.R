@@ -4,22 +4,7 @@ library(dplyr)
 # this share of the yes and no votes were on the minority side are counted
 CONTESTED_MIN_MINORITY <- 0.1
 
-
-CHAMBER_SIZES <- c(HOUSE = 70, SENATE = 35)
-# Committee votes have at most 15 voters, floor votes nearly the whole chamber
-FLOOR_VOTE_MIN_SHARE <- 0.85
-
-get_floor_votes <- function(vote_infos) {
-  vote_infos |>
-    filter(chamber %in% names(CHAMBER_SIZES)) |>
-    mutate(participants = yes + no + absent + excused) |>
-    filter(
-      participants >= FLOOR_VOTE_MIN_SHARE * CHAMBER_SIZES[chamber],
-      yes + no > 0
-    ) |>
-    mutate(dissent_share = pmin(yes, no) / (yes + no))
-}
-
+# Needs get_floor_votes() from build_floor_votes.R
 # How often each legislator votes with their party and with its leadership
 # vote_choices: votechoices from every session, with person_id, vote_id, option,
 #   chamber ("HOUSE"/"SENATE") and year

@@ -8,12 +8,15 @@ source("data-raw/build_sd_legislators.R")
 source("data-raw/build_floor_votes.R")
 source("data-raw/build_vote_alignment.R")
 source("data-raw/build_legislator_votes.R")
+source("data-raw/build_legislator_sponsorships.R")
 
 # Builds legislators_sd.parquet in the processed folder from the site's session
 # members and the votes, legislator_photos.parquet with their photos as text
 # the app draws without requesting them, vote_alignment.parquet with how often
 # each votes with their party and its leadership, and legislator_votes.parquet
-# with the bills each voted on most closely, with the majority and the minority.
+# with the bills each voted on most closely, with the majority and the minority,
+# and legislator_sponsorships.parquet with the bills each sponsors that have the
+# most cosponsors.
 # Stops at members that need an OpenStates id keyed by hand: they are written to
 # review_p, to be added to manual_p before re-running.
 process_sd_legislators <- function(sd_raw_data_path,
@@ -59,12 +62,25 @@ process_sd_legislators <- function(sd_raw_data_path,
   arrow::write_parquet(alignment, alignment_p)
   flog.info(paste0("Wrote ", alignment_p))
 
+  # Each bill's page on the site, for the bills the card lists
+  bill_urls <- get_sd_bills(years, sd_raw_data_path, refresh = refresh)
+
   legislator_votes <- get_legislator_votes(
     vote_choices,
     read_sessions("votes.parquet"),
     read_sessions("bills.parquet")
-  )
+  ) |>
+    left_join(bill_urls, by = c("session_year", "bill"))
   legislator_votes_p <- fs::path(processed_data_path, "legislator_votes.parquet")
   arrow::write_parquet(legislator_votes, legislator_votes_p)
   flog.info(paste0("Wrote ", legislator_votes_p))
+
+  legislator_sponsorships <- get_legislator_sponsorships(
+    read_sessions("sponsorships.parquet"),
+    read_sessions("bills.parquet")
+  ) |>
+    left_join(bill_urls, by = c("session_year", "bill"))
+  legislator_sponsorships_p <- fs::path(processed_data_path, "legislator_sponsorships.parquet")
+  arrow::write_parquet(legislator_sponsorships, legislator_sponsorships_p)
+  flog.info(paste0("Wrote ", legislator_sponsorships_p))
 }

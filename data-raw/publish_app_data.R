@@ -12,7 +12,8 @@ APP_ROOT_FILES <- c(
   "legislators_sd.parquet",
   "legislator_photos.parquet",
   "vote_alignment.parquet",
-  "legislator_votes.parquet"
+  "legislator_votes.parquet",
+  "legislator_sponsorships.parquet"
 )
 
 # Copy from the processed folder into inst/extdata
