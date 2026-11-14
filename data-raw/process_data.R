@@ -23,7 +23,7 @@ source("data-raw/publish_app_data.R")
 # Paths
 load_dot_env(file = ".env")
 BASE_PATH <- Sys.getenv("BASE_PATH")
-DATA_PATH <- fs::path(BASE_PATH, "data")
+DATA_PATH <- fs::path(BASE_PATH, "pipeline-data")
 OPENSTATES_RAW_DATA_PATH <- fs::path(DATA_PATH, "raw", "openstates")
 if (!(fs::dir_exists(OPENSTATES_RAW_DATA_PATH))) {
   stop("Could not find raw data at '", OPENSTATES_RAW_DATA_PATH, "'")
