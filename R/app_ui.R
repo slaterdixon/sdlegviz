@@ -14,6 +14,8 @@ app_ui <- function(request) {
     ),
     window_title = "SD Legviz",
     theme = app_theme(),
+    lang = "en",
+    fillable = FALSE,
     header = golem_add_external_resources(),
     bslib::nav_panel("House", value = "house", mod_network_ui("house", years)),
     bslib::nav_panel("Senate", value = "senate", mod_network_ui("senate", years)),
@@ -21,7 +23,6 @@ app_ui <- function(request) {
   )
 }
 
-#' The Bootstrap theme: plain, with the party colors as the only color
 #' @noRd
 app_theme <- function() {
   bslib::bs_theme(
