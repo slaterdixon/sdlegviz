@@ -2,7 +2,7 @@
 output: github_document
 ---
 
-![/docs/README_SS.png]
+![SDLegVizScreenshot](./docs/README_SS.png)
 
 # `{sdlegviz}`
 
