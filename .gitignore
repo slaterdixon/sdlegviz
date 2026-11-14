@@ -20,3 +20,4 @@ inst/extdata/legislator_photos.parquet
 # Downloaded from sdlegislature.gov by data-raw/get_sd_data.R
 data/raw/sdlegislature/
 PRODUCT.md
+claude/
