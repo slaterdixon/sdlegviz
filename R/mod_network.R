@@ -27,18 +27,61 @@ mod_network_ui <- function(id, years, backbone = id) {
         label = "Find a legislator",
         choices = NULL,
         options = list(placeholder = "Search by name")
-      ),
-      about_panel(backbone)
+      )
     ),
+    tags$aside(class = "legviz-about", about_panel(backbone)),
     tags$main(
       class = "legviz-graph",
-      visNetwork::visNetworkOutput(ns("network_viz"), height = "100%")
+      `data-view` = "graph",
+      tags$div(
+        class = "graph-toolbar",
+        tags$div(
+          class = "view-toggle",
+          role = "group",
+          `aria-label` = "View",
+          tags$button(type = "button", `data-view` = "graph", `aria-pressed` = "true", "Graph"),
+          tags$button(type = "button", `data-view` = "table", `aria-pressed` = "false", "Table")
+        ),
+        tags$div(
+          class = "graph-zoom",
+          role = "group",
+          `aria-label` = "Zoom",
+          zoom_button("in", "Zoom in", "M12 5v14M5 12h14"),
+          zoom_button("out", "Zoom out", "M5 12h14"),
+          zoom_button("fit", "Reset zoom", "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8M3 3v5h5")
+        )
+      ),
+      tags$div(
+        class = "graph-canvas",
+        role = "region",
+        `aria-label` = "Network of legislators. The Table view lists the same legislators.",
+        visNetwork::visNetworkOutput(ns("network_viz"), height = "100%")
+      ),
+      tags$div(class = "graph-table", uiOutput(ns("members"))),
+      uiOutput(ns("graph_key"))
     ),
     tags$aside(
       class = "legviz-detail",
+      `aria-live` = "polite",
       uiOutput(ns("legislator_card"))
     )
   ))
+}
+
+#' A button that zooms the graph, drawn as an icon with a name for screen readers
+#' @noRd
+zoom_button <- function(action, label, path) {
+  tags$button(
+    type = "button",
+    `data-zoom` = action,
+    `aria-label` = label,
+    title = label,
+    tags$svg(
+      viewBox = "0 0 24 24",
+      `aria-hidden` = "true",
+      tags$path(d = path)
+    )
+  )
 }
 
 #' Placeholder shown when a legislator's image fails to load
@@ -77,17 +120,34 @@ network_widget <- function(g, clicked_input = NULL) {
       borderWidthSelected = 6,
       # Zoomed out, the default font is too small to be drawn
       font = list(size = 0.6 * NODE_SIZE),
+      # A name is drawn only once it is big enough to read
+      scaling = list(label = list(drawThreshold = 9)),
+      # The node picked, or under the pointer, gets an ink ring and grows
+      chosen = list(node = htmlwidgets::JS(
+        "function(values, id, selected, hovering) {
+           if (selected || hovering) {
+             values.borderColor = '#1c1917';
+             values.borderWidth = 6;
+             values.size = values.size * 1.3;
+           }
+         }"
+      )),
       brokenImage = broken_image_uri()
     ) |>
     # The layout is computed here rather than by physics in the browser, so
     # nothing moves. Of the igraph layouts, this one overlaps the fewest nodes.
     visNetwork::visIgraphLayout(layout = "layout_with_kk", randomSeed = 42) |>
+    # The layout is as tall as it is wide, so the browser turns it to the panel
     visNetwork::visEvents(
       type = "once",
-      afterDrawing = "function() { this.fit(); }"
+      afterDrawing = "function() { if (window.legviz) window.legviz.arrange(this); this.fit(); }"
     ) |>
-    visNetwork::visEvents(select = select_event(clicked_input)) |>
-    visNetwork::visOptions(highlightNearest = TRUE) |>
+    visNetwork::visEvents(
+      select = select_event(clicked_input),
+      resize = "function() { this.fit(); }"
+    ) |>
+    visNetwork::visInteraction(hover = TRUE, keyboard = TRUE) |>
+    visNetwork::visOptions(highlightNearest = list(enabled = TRUE, hover = TRUE)) |>
     visNetwork::visEdges(color = list(opacity = 0.3))
 }
 
@@ -142,18 +202,33 @@ mod_network_server <- function(id, backbone) {
       updateSelectizeInput(session, "legislator", selected = input$clicked %||% character(0))
     }, ignoreNULL = FALSE, ignoreInit = TRUE)
 
+    # A pick in the table goes through the search, which draws it in the graph
+    observeEvent(input$picked, {
+      updateSelectizeInput(session, "legislator", selected = input$picked)
+    })
+
     output$legislator_card <- renderUI({
       legislators <- graph()$legislators
       legislator <- legislators[match(selected(), legislators$id), ]
       if (is.null(selected()) || is.na(legislator$id)) {
         legislator_card_placeholder()
       } else {
+        sponsorship <- backbone == "sponsorship"
         legislator_card(
           legislator,
-          read_legislator_votes(selected(), input$select_year),
-          peers = legislators
+          votes = if (!sponsorship) read_legislator_votes(selected(), input$select_year),
+          peers = legislators,
+          linked = !selected() %in% unlinked_ids(graph()),
+          alignment = !sponsorship,
+          sponsored = if (sponsorship) read_legislator_sponsorships(selected(), input$select_year)
         )
       }
+    })
+
+    output$graph_key <- renderUI(graph_key(graph()))
+
+    output$members <- renderUI({
+      members_table(graph(), votes = backbone != "sponsorship", input_id = session$ns("picked"))
     })
 
     output$network_viz <- visNetwork::renderVisNetwork(
