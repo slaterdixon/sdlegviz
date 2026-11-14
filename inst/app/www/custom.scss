@@ -8,18 +8,18 @@ $page: #fafaf9; // the theme's bg, in app_theme()
 .legviz {
   display: grid;
   grid-template-columns: 16rem minmax(0, 1fr) 21rem;
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "controls graph detail"
+    "about graph detail";
+  gap: 0 1.5rem;
   height: calc(100vh - 5rem);
-  grid-template-rows: minmax(0, 1fr);
   min-height: 32rem;
   padding: 1rem 0.5rem;
 }
 
 .legviz-controls {
-  height: 100%;
-  overflow-y: auto;
-  padding-right: 0.25rem;
+  grid-area: controls;
 
   label.control-label {
     margin-bottom: 0.25rem;
@@ -35,8 +35,18 @@ $page: #fafaf9; // the theme's bg, in app_theme()
   }
 }
 
+.legviz-about {
+  grid-area: about;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
 .legviz-graph {
-  height: 100%;
+  grid-area: graph;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border: 1px solid $line;
   border-radius: 8px;
   background: $page;
@@ -44,7 +54,8 @@ $page: #fafaf9; // the theme's bg, in app_theme()
 }
 
 .legviz-detail {
-  height: 100%;
+  grid-area: detail;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 0.25rem;
 }
@@ -52,15 +63,23 @@ $page: #fafaf9; // the theme's bg, in app_theme()
 @media (max-width: 992px) {
   .legviz {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "controls"
+      "graph"
+      "detail"
+      "about";
+    gap: 1rem 0;
     height: auto;
   }
 
   .legviz-graph {
-    height: 70vh;
+    height: 72vh;
   }
 
+  .legviz-about,
   .legviz-detail {
-    height: auto;
+    overflow: visible;
   }
 }
 
@@ -176,11 +195,15 @@ $page: #fafaf9; // the theme's bg, in app_theme()
   color: $muted;
 }
 
+.legislator-card > .note {
+  margin: 0 0 0.75rem;
+}
+
 // A share of votes against the party's average
-.share {
+.vote-prop {
   margin-bottom: 1rem;
 
-  .share-label {
+  .vote-prop-label {
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
@@ -190,12 +213,29 @@ $page: #fafaf9; // the theme's bg, in app_theme()
       font-weight: 600;
     }
 
-    span {
+    > span {
       color: $muted;
     }
   }
 
-  .share-track {
+  // The ? that explains a label; a button so it opens on tap and focus
+  .vote-prop-why {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-left: 0.35rem;
+    padding: 0;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: none;
+    color: $muted;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    vertical-align: 0.1em;
+    cursor: help;
+  }
+
+  .vote-prop-track {
     position: relative;
     height: 0.5rem;
     margin: 0.5rem 0 0.35rem;
@@ -203,13 +243,13 @@ $page: #fafaf9; // the theme's bg, in app_theme()
     background: $line;
   }
 
-  .share-fill {
+  .vote-prop-fill {
     height: 100%;
     border-radius: 99px;
     background: var(--party);
   }
 
-  .share-average {
+  .vote-prop-average {
     position: absolute;
     top: -0.25rem;
     bottom: -0.25rem;
@@ -218,7 +258,7 @@ $page: #fafaf9; // the theme's bg, in app_theme()
     background: $ink;
   }
 
-  .share-caption {
+  .vote-prop-caption {
     font-size: 0.75rem;
     color: $muted;
   }
@@ -290,4 +330,248 @@ $page: #fafaf9; // the theme's bg, in app_theme()
   .note {
     margin-top: 0.75rem;
   }
+}
+
+// The row above the graph: which view, and zoom
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid $line;
+
+  button {
+    border: 1px solid $line;
+    background: $paper;
+    color: $ink;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $muted;
+    }
+  }
+}
+
+.view-toggle {
+  display: inline-flex;
+
+  button {
+    padding: 0.45rem 0.9rem;
+
+    &:first-child {
+      border-radius: 6px 0 0 6px;
+    }
+
+    &:last-child {
+      margin-left: -1px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    &[aria-pressed="true"] {
+      border-color: $ink;
+      background: $ink;
+      color: $paper;
+      position: relative;
+    }
+  }
+}
+
+.graph-zoom {
+  display: inline-flex;
+  gap: 0.35rem;
+
+  button {
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 6px;
+  }
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+@media (pointer: coarse) {
+  .graph-zoom button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .view-toggle button {
+    padding: 0.8rem 1.1rem;
+  }
+}
+
+// One panel, two views of the same legislators
+.graph-canvas {
+  flex: 1;
+  min-height: 0;
+}
+
+.graph-canvas .visNetwork {
+  height: 100% !important;
+}
+
+.graph-table {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.legviz-graph[data-view="table"] {
+  .graph-canvas,
+  .graph-zoom {
+    display: none;
+  }
+
+  .graph-table {
+    display: block;
+  }
+}
+
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid $line;
+    text-align: left;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: $page;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+
+  thead button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  thead th[aria-sort="ascending"] button::after {
+    content: " \2191";
+  }
+
+  thead th[aria-sort="descending"] button::after {
+    content: " \2193";
+  }
+
+  .member-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: $ink;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// What the colors and sizes stand for, and how many members there are
+.graph-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 1.25rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid $line;
+  font-size: 0.78rem;
+  color: $muted;
+
+  .graph-status {
+    margin: 0;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}
+
+.key-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.key-dot-large {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+// Browser surfaces: the parts the page did not draw still carry the design
+:focus-visible {
+  outline: 2px solid $ink;
+  outline-offset: 2px;
+}
+
+.selectize-input.focus {
+  border-color: $ink;
+  box-shadow: none;
+}
+
+.selectize-input input::placeholder,
+.form-control::placeholder {
+  color: #57534e;
+  opacity: 1;
+}
+
+::selection {
+  background: $line;
+  color: $ink;
+}
+
+.legviz-detail,
+.legviz-about,
+.graph-table {
+  scrollbar-width: thin;
+  scrollbar-color: $line transparent;
 }
