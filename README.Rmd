@@ -4,57 +4,22 @@ output: github_document
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-```{r, include = FALSE}
-  knitr::opts_chunk$set(
-    collapse = TRUE,
-    comment = "#>",
-    fig.path = "man/figures/README-",
-    out.width = "100%"
-)
-```
-
 # `{sdlegviz}`
 
-<!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- badges: end -->
-
-## Installation
-
-You can install the development version of `{sdlegviz}` like so:
-
-```{r}
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
-```
+Networks of how South Dakota legislators vote and sponsor bills together, from
+OpenStates roll calls and the SD Legislature's member records.
 
 ## Run
 
-You can launch the application by running:
-
 ```{r, eval = FALSE}
-sdlegviz::run_app()
+golem::run_dev() # or source("dev/run_dev.R")
 ```
 
-## About
+## Data
 
-You are reading the doc about version : `r golem::pkg_version()`
+`source("data-raw/process_data.R")` rebuilds the app's data in `inst/extdata`
+from the raw OpenStates data, set by `BASE_PATH` in `.env`.
 
-This README has been compiled on the
+## Deploy
 
-```{r}
-Sys.time()
-```
-
-Here are the tests results and package coverage:  
-
-```{r, error = TRUE}
-devtools::check(quiet = TRUE)
-```
-
-```{r echo = FALSE}
-unloadNamespace("sdlegviz")
-```
-
-```{r, error = TRUE}
-covr::package_coverage()
-```
+See `dev/03_deploy.R`.

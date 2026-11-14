@@ -9,11 +9,7 @@ importFrom(golem,
   with_golem_options
 )
 importFrom(shiny,
-  HTML,
   NS,
-  column,
   shinyApp,
-  tagAppendAttributes,
-  tagList,
-  tags
+  tagList
 )
