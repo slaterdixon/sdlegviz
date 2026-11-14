@@ -1,0 +1,10 @@
+name: sdlegviz
+title: sdlegviz
+username: slaterdixon
+account: slaterdixon
+server: connect.posit.cloud
+hostUrl: https://api.connect.posit.cloud/v1
+appId: 01a1dbb1-3e3c-a4d8-5921-8e799737bfe1
+bundleId:
+url: https://connect.posit.cloud/slaterdixon/content/01a1dbb1-3e3c-a4d8-5921-8e799737bfe1
+version: 1

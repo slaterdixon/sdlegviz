@@ -1,0 +1,13 @@
+data
+data-raw
+dev
+tests
+man
+README.Rmd
+scratch.qmd
+DESIGN.md
+.env
+.claude
+.impeccable
+.here
+.DS_Store
