@@ -14,7 +14,7 @@ get_session_id_lookup <- function(years) {
           session_year = as.integer(Year)) |>
     filter(session_year %in% years)
 
-    missing_years <- setdiff(years, session_id_lookup$session_year)
+    missing_years <- setdiff(years, lookup$session_year)
     if (length(missing_years) > 0) {
       stop("No regular session found on the site for: ", paste(missing_years, collapse = ", "))
     }
@@ -53,6 +53,48 @@ get_sd_members <- function(years, raw_data_path, refresh = FALSE) {
     session_id_lookup$session_id,
     session_id_lookup$session_year,
     get_sd_session_members,
+    raw_data_path = raw_data_path,
+    refresh = refresh
+  ) |>
+    bind_rows()
+}
+
+### Bills
+# The bills of one session, from the raw json saved in raw_data_path like the
+# members. Set refresh to download it again.
+# -> a df with session_year, bill (e.g. "HB 1045") and the site's bill_url
+get_sd_session_bills <- function(session_id,
+                                 session_year,
+                                 raw_data_path,
+                                 refresh = FALSE) {
+  bills_p <- fs::path(raw_data_path, paste0("SD_", session_year, "_bills.json"))
+
+  if (refresh || !fs::file_exists(bills_p)) {
+    fs::dir_create(raw_data_path)
+    download.file(
+      paste0(LRC_API_URL, "/Bills/Session/", session_id),
+      bills_p,
+      quiet = TRUE
+    )
+    flog.info(paste0("Wrote ", bills_p))
+  }
+
+  fromJSON(bills_p) |>
+    tibble::as_tibble() |>
+    transmute(
+      session_year = as.integer(session_year),
+      bill = paste(BillType, BillNumberOnly),
+      bill_url = paste0("https://sdlegislature.gov/Session/Bill/", BillId)
+    )
+}
+
+get_sd_bills <- function(years, raw_data_path, refresh = FALSE) {
+  session_id_lookup <- get_session_id_lookup(years)
+
+  purrr::map2(
+    session_id_lookup$session_id,
+    session_id_lookup$session_year,
+    get_sd_session_bills,
     raw_data_path = raw_data_path,
     refresh = refresh
   ) |>
